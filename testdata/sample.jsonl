@@ -1,0 +1,23 @@
+{"host":"missing.example.com","input":"example.com","sources":["crtsh"]}
+{"host":"app.example.com","ttl":300,"resolver":["1.1.1.1:53"],"cname":["acme-app.azurewebsites.net"],"status_code":"NXDOMAIN","status_code_raw":3,"timestamp":"2026-10-24T18:00:00Z"}
+{"host":"old.example.com","ttl":300,"resolver":["1.1.1.1:53"],"cname":["gone.example.net"],"status_code":"NXDOMAIN","status_code_raw":3}
+{"host":"cdn-old.example.com","ttl":300,"resolver":["1.1.1.1:53"],"cname":["d111abc.cloudfront.net"],"status_code":"NXDOMAIN","status_code_raw":3}
+{"host":"docs.example.com","ttl":300,"resolver":["1.1.1.1:53"],"a":["185.199.108.153"],"cname":["acme-docs.github.io"],"status_code":"NOERROR"}
+{"host":"blog.example.com","ttl":300,"resolver":["1.1.1.1:53"],"a":["185.199.108.153"],"cname":["acme-blog.github.io"],"status_code":"NOERROR"}
+{"host":"assets.example.com","ttl":300,"resolver":["1.1.1.1:53"],"a":["52.216.1.1"],"cname":["acme-assets.s3.amazonaws.com","s3-1-w.amazonaws.com"],"status_code":"NOERROR"}
+{"host":"shop.example.com","ttl":300,"resolver":["1.1.1.1:53"],"a":["23.227.38.65"],"cname":["shops.myshopify.com"],"status_code":"NOERROR"}
+{"host":"status.example.com","ttl":300,"resolver":["1.1.1.1:53"],"cname":["acme-status.herokudns.com"],"status_code":"NOERROR"}
+{"host":"web.example.com","ttl":300,"resolver":["1.1.1.1:53"],"a":["20.1.1.1"],"cname":["acme-web.azurewebsites.net","waws-prod.cloudapp.net"],"status_code":"NOERROR"}
+{"host":"help.example.com","ttl":300,"resolver":["1.1.1.1:53"],"a":["104.16.51.111"],"cname":["acme.zendesk.com"],"status_code":"NOERROR"}
+{"host":"www.example.com","ttl":300,"resolver":["1.1.1.1:53"],"a":["192.0.2.2","192.0.2.1"],"status_code":"NOERROR"}
+{"host":"www.example.com","ttl":60,"resolver":["8.8.8.8:53"],"a":["192.0.2.1","192.0.2.2"],"status_code":"noerror"}
+{"host":"api.example.com","ttl":300,"resolver":["1.1.1.1:53"],"a":["192.0.2.1","192.0.2.2"],"aaaa":["2001:db8::1"],"status_code":"NOERROR"}
+{"host":"cdn.example.com","ttl":300,"resolver":["1.1.1.1:53"],"a":["198.51.100.7"],"cname":["cdn.example.net"],"status_code":"NOERROR"}
+{"host":"gone.example.com","ttl":300,"resolver":["1.1.1.1:53"],"status_code":"NXDOMAIN","status_code_raw":3}
+{"host":"empty.example.com","ttl":300,"resolver":["1.1.1.1:53"],"status_code":"NOERROR"}
+{"host":"outside.example.org","ttl":300,"resolver":["1.1.1.1:53"],"a":["192.0.2.9"],"status_code":"NOERROR"}
+{"host":"raijin-wc-00ff00ff.example.com","ttl":300,"resolver":["1.1.1.1:53"],"a":["192.0.2.9"],"status_code":"NOERROR"}
+[INF] a log line that is not a result
+{"check":"http","host":"docs.example.com","provider":"GitHub Pages","url":"http://docs.example.com/","status":404,"match":true}
+{"check":"http","host":"blog.example.com","provider":"GitHub Pages","url":"http://blog.example.com/","status":200,"match":false}
+{"check":"http","host":"shop.example.com","provider":"Shopify","url":"https://shop.example.com/","match":false,"error":"timeout"}

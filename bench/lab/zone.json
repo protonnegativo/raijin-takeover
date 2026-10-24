@@ -1,0 +1,1066 @@
+{
+ "http": {
+  "app.acme.example": {
+   "body": "<html><head><title>No such app</title></head><body>There's nothing here, yet.</body></html>",
+   "status": 404
+  },
+  "assets.acme.example": {
+   "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Error><Code>NoSuchBucket</Code><Message>The specified bucket does not exist</Message><BucketName>assets.acme.example</BucketName></Error>",
+   "status": 404
+  },
+  "docs.acme.example": {
+   "body": "<html><title>Site not found \u00b7 GitHub Pages</title><h1>404</h1><p><strong>There isn't a GitHub Pages site here.</strong></p></html>",
+   "status": 404
+  },
+  "edge.acme.example": {
+   "body": "Fastly error: unknown domain: edge.acme.example. Please check that this domain has been added to a service.",
+   "status": 500
+  },
+  "site.acme.example": {
+   "body": "Not Found - Request ID: 01JABCDEF0123456789",
+   "status": 404
+  },
+  "store.acme.example": {
+   "body": "<html><body><h1>Sorry, this shop is currently unavailable.</h1></body></html>",
+   "status": 404
+  }
+ },
+ "records": {
+  "acme-app.herokuapp.com": {
+   "a": [
+    "54.0.0.10"
+   ]
+  },
+  "acme-assets.s3.amazonaws.com": {
+   "cname": "s3-w.us-east-1.amazonaws.com"
+  },
+  "acme-blog.github.io": {
+   "a": [
+    "185.199.108.153",
+    "185.199.109.153"
+   ]
+  },
+  "acme-docs.github.io": {
+   "a": [
+    "185.199.108.153",
+    "185.199.109.153"
+   ]
+  },
+  "acme-media.s3.amazonaws.com": {
+   "cname": "s3-w.us-east-1.amazonaws.com"
+  },
+  "acme-site.netlify.app": {
+   "a": [
+    "75.2.60.5"
+   ]
+  },
+  "acme-status.herokudns.com": {
+   "rcode": 0
+  },
+  "acme-web.azurewebsites.net": {
+   "cname": "waws-prod-bn1.cloudapp.net"
+  },
+  "acme.cdn.example.net": {
+   "cname": "edge.cdn.example.net"
+  },
+  "acme.helpscoutdocs.com": {
+   "a": [
+    "52.0.0.9"
+   ]
+  },
+  "acme.zendesk.com": {
+   "a": [
+    "198.51.100.40"
+   ]
+  },
+  "api-eu.acme.example": {
+   "cname": "acme-api-eu.cloudapp.net"
+  },
+  "app.acme.example": {
+   "cname": "acme-app.herokuapp.com"
+  },
+  "assets.acme.example": {
+   "cname": "acme-assets.s3.amazonaws.com"
+  },
+  "beanstalk.acme.example": {
+   "cname": "acme-prod.us-east-1.elasticbeanstalk.com"
+  },
+  "blog.acme.example": {
+   "cname": "acme-blog.github.io"
+  },
+  "d1a2b3c4.cloudfront.net": {
+   "a": [
+    "198.51.100.30",
+    "198.51.100.31"
+   ]
+  },
+  "docs.acme.example": {
+   "cname": "acme-docs.github.io"
+  },
+  "edge.acme.example": {
+   "cname": "j.sni.global.fastly.net"
+  },
+  "edge.cdn.example.net": {
+   "a": [
+    "198.51.100.20",
+    "198.51.100.21"
+   ],
+   "aaaa": [
+    "2001:db8:20::1"
+   ]
+  },
+  "help.acme.example": {
+   "cname": "acme.zendesk.com"
+  },
+  "img0.acme.example": {
+   "cname": "d1a2b3c4.cloudfront.net"
+  },
+  "img1.acme.example": {
+   "cname": "d1a2b3c4.cloudfront.net"
+  },
+  "img2.acme.example": {
+   "cname": "d1a2b3c4.cloudfront.net"
+  },
+  "img3.acme.example": {
+   "cname": "d1a2b3c4.cloudfront.net"
+  },
+  "img4.acme.example": {
+   "cname": "d1a2b3c4.cloudfront.net"
+  },
+  "img5.acme.example": {
+   "cname": "d1a2b3c4.cloudfront.net"
+  },
+  "img6.acme.example": {
+   "cname": "d1a2b3c4.cloudfront.net"
+  },
+  "img7.acme.example": {
+   "cname": "d1a2b3c4.cloudfront.net"
+  },
+  "img8.acme.example": {
+   "cname": "d1a2b3c4.cloudfront.net"
+  },
+  "img9.acme.example": {
+   "cname": "d1a2b3c4.cloudfront.net"
+  },
+  "j.sni.global.fastly.net": {
+   "a": [
+    "151.101.1.10",
+    "151.101.65.10"
+   ]
+  },
+  "kb.acme.example": {
+   "cname": "acme.helpscoutdocs.com"
+  },
+  "legacy.acme.example": {
+   "cname": "acme-legacy.azurewebsites.net"
+  },
+  "media.acme.example": {
+   "cname": "acme-media.s3.amazonaws.com"
+  },
+  "old-cdn.acme.example": {
+   "cname": "d9z8y7x6.cloudfront.net"
+  },
+  "promo.acme.example": {
+   "cname": "acme-promo-2019.example.org"
+  },
+  "s3-w.us-east-1.amazonaws.com": {
+   "a": [
+    "52.216.0.10"
+   ]
+  },
+  "shop.acme.example": {
+   "cname": "shops.myshopify.com"
+  },
+  "shops.myshopify.com": {
+   "a": [
+    "23.227.38.65"
+   ]
+  },
+  "site.acme.example": {
+   "cname": "acme-site.netlify.app"
+  },
+  "static00.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static01.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static02.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static03.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static04.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static05.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static06.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static07.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static08.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static09.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static10.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static11.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static12.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static13.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static14.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static15.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static16.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static17.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static18.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static19.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static20.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static21.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static22.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static23.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static24.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static25.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static26.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static27.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static28.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static29.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static30.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static31.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static32.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static33.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static34.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static35.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static36.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static37.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static38.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "static39.acme.example": {
+   "cname": "acme.cdn.example.net"
+  },
+  "status.acme.example": {
+   "cname": "acme-status.herokudns.com"
+  },
+  "store.acme.example": {
+   "cname": "shops.myshopify.com"
+  },
+  "support.acme.example": {
+   "cname": "acme.zendesk.com"
+  },
+  "tickets.acme.example": {
+   "cname": "acme.zendesk.com"
+  },
+  "tm.acme.example": {
+   "cname": "acme-tm.trafficmanager.net"
+  },
+  "txt00.acme.example": {
+   "rcode": 0
+  },
+  "txt01.acme.example": {
+   "rcode": 0
+  },
+  "txt02.acme.example": {
+   "rcode": 0
+  },
+  "txt03.acme.example": {
+   "rcode": 0
+  },
+  "txt04.acme.example": {
+   "rcode": 0
+  },
+  "txt05.acme.example": {
+   "rcode": 0
+  },
+  "txt06.acme.example": {
+   "rcode": 0
+  },
+  "txt07.acme.example": {
+   "rcode": 0
+  },
+  "txt08.acme.example": {
+   "rcode": 0
+  },
+  "txt09.acme.example": {
+   "rcode": 0
+  },
+  "txt10.acme.example": {
+   "rcode": 0
+  },
+  "txt11.acme.example": {
+   "rcode": 0
+  },
+  "txt12.acme.example": {
+   "rcode": 0
+  },
+  "txt13.acme.example": {
+   "rcode": 0
+  },
+  "txt14.acme.example": {
+   "rcode": 0
+  },
+  "txt15.acme.example": {
+   "rcode": 0
+  },
+  "txt16.acme.example": {
+   "rcode": 0
+  },
+  "txt17.acme.example": {
+   "rcode": 0
+  },
+  "txt18.acme.example": {
+   "rcode": 0
+  },
+  "txt19.acme.example": {
+   "rcode": 0
+  },
+  "waws-prod-bn1.cloudapp.net": {
+   "a": [
+    "20.0.0.5"
+   ]
+  },
+  "web.acme.example": {
+   "cname": "acme-web.azurewebsites.net"
+  },
+  "web000.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web001.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web002.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web003.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web004.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web005.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web006.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web007.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web008.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web009.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web010.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web011.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web012.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web013.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web014.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web015.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web016.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web017.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web018.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web019.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web020.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web021.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web022.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web023.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web024.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web025.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web026.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web027.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web028.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web029.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web030.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web031.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web032.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web033.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web034.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web035.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web036.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web037.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web038.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web039.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web040.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web041.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web042.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web043.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web044.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web045.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web046.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web047.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web048.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web049.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web050.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web051.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web052.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web053.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web054.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web055.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web056.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web057.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web058.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web059.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web060.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web061.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web062.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web063.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web064.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web065.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web066.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web067.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web068.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web069.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web070.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web071.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web072.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web073.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web074.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web075.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web076.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web077.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web078.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web079.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web080.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web081.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web082.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web083.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web084.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web085.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web086.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web087.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web088.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web089.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web090.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web091.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web092.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web093.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web094.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web095.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web096.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web097.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web098.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web099.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web100.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web101.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web102.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web103.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web104.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web105.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web106.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web107.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web108.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web109.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web110.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web111.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web112.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web113.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web114.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web115.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web116.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  },
+  "web117.acme.example": {
+   "a": [
+    "203.0.113.10",
+    "203.0.113.11"
+   ]
+  },
+  "web118.acme.example": {
+   "a": [
+    "203.0.113.20",
+    "203.0.113.21"
+   ]
+  },
+  "web119.acme.example": {
+   "a": [
+    "203.0.113.30"
+   ]
+  }
+ }
+}
