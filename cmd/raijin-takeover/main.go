@@ -10,6 +10,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"os/signal"
 	"strings"
@@ -39,7 +40,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("raijin-takeover", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	var domains, inputs multi
-	fs.Var(&domains, "d", "name to check (repeatable)")
+	fs.Var(&domains, "d", "name to check (repeatable; default: every host the scope names)")
 	list := fs.String("l", "", "file with one name per line (or subfinder JSONL)")
 	scopeFile := fs.String("scope", "", "scope file (required): domains, *.wildcards, IPs, CIDRs, !exclusions")
 	httpCheck := fs.Bool("http", false, "fetch the page of each candidate whose provider is recognised by its HTTP body (off by default: DNS only)")
@@ -59,7 +60,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 	showVersion := fs.Bool("version", false, "print the version")
 	showBanner := fs.Bool("banner", false, "print the Raijin banner to stderr (off by default to keep output small)")
 	fs.Usage = func() {
-		fmt.Fprintf(stderr, "usage: raijin-takeover --scope scope.txt (-d name | -l names.txt | --input dnsx.jsonl) [flags] [-- extra dnsx args]\n\n")
+		fmt.Fprintf(stderr, "usage: raijin-takeover --scope scope.txt [-d name | -l names.txt | --input dnsx.jsonl] [flags] [-- extra dnsx args]\n\nWith no targets it checks every host the scope names.\n\n")
 		fs.PrintDefaults()
 	}
 	if err := fs.Parse(args); err != nil {
@@ -170,8 +171,27 @@ func run(args []string, stdout, stderr io.Writer) int {
 		opt.Resolved = len(records) > 0
 		res.Target = strings.Join(inputs, ", ")
 	} else {
-		names = inScope(domains, sc, res.Omitted)
+		if len(domains) == 0 {
+			// no names given: check every name the scope names (IPs and ranges are not names)
+			targets, wildcards, _ := sc.Targets()
+			for _, t := range targets {
+				if net.ParseIP(t) == nil {
+					names = append(names, t)
+				}
+			}
+			for _, w := range wildcards {
+				res.Next = append(res.Next, "raijin-subs --scope "+*scopeFile+" -d "+strings.TrimPrefix(w, "*.")+" --raw subs.jsonl, then raijin-takeover --scope "+*scopeFile+" -l subs.jsonl to cover "+w+" (-l reads raijin-subs' raw JSONL directly)")
+			}
+		} else {
+			names = inScope(domains, sc, res.Omitted)
+		}
 		if len(names) == 0 {
+			if len(res.Next) > 0 {
+				res.Summary = "the scope names no single host to scan"
+				res.Target = *scopeFile
+				write(stdout, &res, *format, *pretty)
+				return 1
+			}
 			fmt.Fprintln(stderr, "raijin-takeover: no names in scope")
 			return 1
 		}

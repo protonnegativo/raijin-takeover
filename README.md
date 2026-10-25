@@ -51,6 +51,7 @@ You also need `dnsx` on `PATH`, or pass `--dnsx <path>`.
 ## Usage
 
 ```bash
+raijin-takeover --scope scope.txt                              # check every host the scope names
 raijin-takeover --scope scope.txt -d docs.example.com
 raijin-takeover --scope scope.txt -l names.txt                 # one name per line, or subfinder JSONL
 raijin-takeover --scope scope.txt -l names.txt --http          # also fetch the page of the HTTP candidates
@@ -67,6 +68,8 @@ example.com
 10.0.0.0/24
 !admin.example.com
 ```
+
+With no `-d`, `-l` or `--input`, raijin-takeover checks what the scope names: every domain, minus exclusions (IPs and ranges are not names, so they are skipped). A wildcard names no host, so for each one `next` gives the command that enumerates it first (`raijin-subs --scope scope.txt -d <apex> --raw subs.jsonl`); `-l` reads that raw JSONL directly.
 
 Names outside the scope are dropped before dnsx resolves them, and records and checks outside it are dropped from an input file. Both are counted in `omitted.out_of_scope`.
 
@@ -193,7 +196,7 @@ The Raijin banner is **off by default**, so normal runs stay small. `--banner` p
 | Flag | Default | |
 |---|---|---|
 | `--scope` | (required) | scope file |
-| `-d` / `-l` / `--input` | | one name (repeatable) / name file (or subfinder JSONL) / existing dnsx output, HTTP checks and name lists (repeatable) |
+| `-d` / `-l` / `--input` | every host the scope names | one name (repeatable) / name file (or subfinder JSONL) / existing dnsx output, HTTP checks and name lists (repeatable) |
 | `--http` | false | fetch the page of each candidate recognised by its HTTP body |
 | `--http-connect` | | send every HTTP check to this host:port, with the name in `Host` (labs) |
 | `--http-timeout` | 10 | seconds per HTTP check |
