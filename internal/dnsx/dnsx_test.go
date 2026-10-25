@@ -1,6 +1,7 @@
 package dnsx
 
 import (
+	"os"
 	"strings"
 	"testing"
 )
@@ -41,5 +42,17 @@ func TestParseSkipsOtherLines(t *testing.T) {
 func TestProbe(t *testing.T) {
 	if !(Record{Host: ProbePrefix + "00ff00ff.example.com"}).Probe() || (Record{Host: "www.example.com"}).Probe() {
 		t.Error("Probe() must recognise raijin-subs probe names only")
+	}
+}
+
+// The drift job's NXDOMAIN check must run dnsx exactly as Run does, or it would test something else.
+func TestDriftJobUsesTheSameArgs(t *testing.T) {
+	b, err := os.ReadFile("../../.github/workflows/engine-drift.yml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	args := strings.Join(Args("LIST", Options{}), " ")
+	if want := strings.Replace(args, "LIST", `"$RUNNER_TEMP/nx.txt"`, 1); !strings.Contains(string(b), "dnsx "+want+" ") {
+		t.Errorf("engine-drift.yml must run dnsx %s", want)
 	}
 }

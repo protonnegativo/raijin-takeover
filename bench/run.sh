@@ -58,6 +58,8 @@ if [ "${LIVE:-}" = 1 ]; then
   sleep 1
   "$W/raijin-takeover" --dnsx "$DNSX" --resolvers "127.0.0.1:$DNS_PORT" --scope "$W/dangling.scope" -l "$HERE/lab/names.txt" \
     --http --http-connect "127.0.0.1:$HTTP_PORT" --raw "$f/raw.jsonl" > "$W/dangling.live.json"
+  # The live run itself, before any replay: the known dangling CNAMEs must be found with this dnsx.
+  python3 "$HERE/known_answer.py" "$W/dangling.live.json" "$HERE/lab/expected.txt"
   "$DNSX" -r "127.0.0.1:$DNS_PORT" -l "$HERE/lab/names.txt" -a -aaaa -cname -resp -silent -nc -duc < /dev/null > "$f/dnsx.txt"
   "$DNSX" -r "127.0.0.1:$DNS_PORT" -l "$HERE/lab/names.txt" -rcode noerror,formerr,servfail,nxdomain,notimp,refused -silent -nc -duc < /dev/null > "$f/status.txt"
   kill $LAB 2>/dev/null || true
@@ -81,6 +83,7 @@ scenario() {
   echo; echo "## $name: $(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["summary"])' "$o/raijin.json")"; echo
   cat "$ROOT/$names" "$ROOT/$in" > "$o/engine_and_names.jsonl"
   python3 "$HERE/verify.py" "$o/engine_and_names.jsonl" "$o/raijin.json" "$domain"
+  if [ "$name" = dangling ]; then python3 "$HERE/known_answer.py" "$o/raijin.json" "$HERE/lab/expected.txt"; fi
   "$PY" "$HERE/count_tokens.py" \
     "dnsx -json -omit-raw=$o/dnsx.jsonl" \
     "dnsx text (records)=$f/dnsx.txt" \

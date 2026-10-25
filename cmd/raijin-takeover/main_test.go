@@ -378,10 +378,10 @@ func TestScopeAloneChecksWhatTheScopeNames(t *testing.T) {
 func TestEngineVersionAndFormatWarnings(t *testing.T) {
 	dir := t.TempDir()
 	fake := filepath.Join(dir, "dnsx")
-	// A different major version than the tested one is always a warning.
+	// An older major version than the tested one is always a warning (a newer one may be known-bad).
 	want := tested(t)
 	major, _ := strconv.Atoi(strings.SplitN(want, ".", 2)[0])
-	old := strconv.Itoa(major+1) + ".0.0"
+	old := strconv.Itoa(major-1) + ".9.0"
 	script := `#!/bin/sh
 [ "$1" = -version ] && { echo "[INF] Current Version: ` + old + `" >&2; exit 0; }
 echo '{"host":"www.example.com","a":["192.0.2.1"],"status":"NOERROR"}'
@@ -442,5 +442,51 @@ func TestVersionLine(t *testing.T) {
 	}
 	if want := "raijin-takeover " + version + " (tested with dnsx " + tested(t) + ")\n"; out.String() != want {
 		t.Errorf("--version = %q, want %q", out.String(), want)
+	}
+}
+
+// dnsx 1.3.x is the same major and newer than the tested version, but known-bad: it gets an
+// engine_version warning, and the names it wrote no line for an engine_format error. They are still
+// listed, as NOANSWER.
+func TestKnownBadDnsxAndNamesWithoutALine(t *testing.T) {
+	dir := t.TempDir()
+	fake := filepath.Join(dir, "dnsx")
+	// Like dnsx 1.3.1: no line for the NXDOMAIN name, even with -rcode.
+	script := `#!/bin/sh
+[ "$1" = -version ] && { echo "[INF] Current Version: 1.3.1" >&2; exit 0; }
+echo '{"host":"www.example.com","a":["192.0.2.1"],"status_code":"NOERROR"}'
+`
+	if err := os.WriteFile(fake, []byte(script), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	var out, errb bytes.Buffer
+	if code := run([]string{"--scope", scopeFile(t), "-d", "www.example.com", "-d", "gone.example.com", "-d", "x.example.org",
+		"--dnsx", fake, "--raw", filepath.Join(dir, "raw.jsonl")}, &out, &errb); code != 0 {
+		t.Fatalf("exit %d: %s %s", code, errb.String(), out.String())
+	}
+	var v output
+	if err := json.Unmarshal(out.Bytes(), &v); err != nil {
+		t.Fatal(err)
+	}
+	if len(v.Errors) != 2 || v.Errors[0].Kind != "engine_version" || v.Errors[1].Kind != "engine_format" {
+		t.Fatalf("errors: %+v", v.Errors)
+	}
+	if h := v.Errors[0].Hint; !strings.HasPrefix(h, "dnsx 1.3.1 is a known-bad version (>=1.3.0): it drops names without records") {
+		t.Errorf("engine_version hint %q", h)
+	}
+	// The out-of-scope name was never sent to dnsx, so it is not counted.
+	want := "dnsx wrote no line for 1 of 2 names; dnsx 1.3.0+ drops names without records from -json even with -rcode (projectdiscovery/dnsx#1091). Install dnsx " + tested(t) +
+		": go install github.com/projectdiscovery/dnsx/cmd/dnsx@v" + tested(t) + ", or run raijin-mcp update --pinned"
+	if v.Errors[1].Hint != want {
+		t.Errorf("engine_format hint %q\nwant %q", v.Errors[1].Hint, want)
+	}
+	listed := false
+	for _, g := range v.Groups {
+		for _, l := range g.Locations {
+			listed = listed || (l == "gone.example.com" && g.Status == "NOANSWER")
+		}
+	}
+	if !listed {
+		t.Errorf("gone.example.com must still be listed, as NOANSWER: %s", out.String())
 	}
 }

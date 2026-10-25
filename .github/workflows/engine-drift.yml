@@ -41,6 +41,30 @@ jobs:
           echo "dnsx installed $installed, tested $tested"
           echo "installed=$installed" >> "$GITHUB_OUTPUT"
           echo "tested=$tested" >> "$GITHUB_OUTPUT"
+      - name: Known answer, a name that cannot exist
+        env:
+          INSTALLED: ${{ steps.versions.outputs.installed }}
+        run: |
+          # dnsx 1.3.0+ writes no -json line for names without records, even with -rcode
+          # (projectdiscovery/dnsx#1091): NXDOMAIN names and dangling CNAMEs would vanish, and the live
+          # benchmark cannot see it because it compares with dnsx's own output. One name, the runner's
+          # resolver, the exact arguments raijin-takeover passes (internal/dnsx Args; a test keeps them equal).
+          # The .example TLD is reserved (RFC 2606): the root answers NXDOMAIN. example.com is no good, it
+          # answers NOERROR for any name.
+          name="raijin-drift-$RANDOM$RANDOM.example"
+          echo "$name" > "$RUNNER_TEMP/nx.txt"
+          resolver=$(awk '/^nameserver/ { print $2; exit }' /etc/resolv.conf)
+          out=$(dnsx -l "$RUNNER_TEMP/nx.txt" -a -aaaa -resp -json -silent -nc -duc -omit-raw -rcode noerror,formerr,servfail,nxdomain,notimp,refused -r "${resolver:-1.1.1.1}" 2>&1 || true)
+          echo "$out"
+          if ! grep -q '"status_code":"NXDOMAIN"' <<<"$out"; then
+            {
+              echo "dnsx $INSTALLED wrote no NXDOMAIN line for $name, with the arguments raijin-takeover uses."
+              echo "Names that do not resolve, and so every dangling CNAME, would get no line at all."
+              echo "This is the -json regression of dnsx 1.3.0+: https://github.com/projectdiscovery/dnsx/pull/1091"
+              echo "engines.json is not bumped. dnsx output: ${out:-(nothing)}"
+            } > "$RUNNER_TEMP/verify.txt"
+            exit 1
+          fi
       - run: pip install tiktoken
       - name: Live benchmark
         id: bench

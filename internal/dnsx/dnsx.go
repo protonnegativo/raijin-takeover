@@ -102,6 +102,28 @@ func Run(ctx context.Context, names []string, opt Options) ([]Record, Format, st
 	return records, f, "", nil
 }
 
+// Missing counts the names that no record is for: dnsx wrote no line for them. Names compare without
+// case and trailing dot, and each counts once.
+func Missing(names []string, records []Record) int {
+	key := func(s string) string { return strings.TrimSuffix(strings.ToLower(strings.TrimSpace(s)), ".") }
+	got := map[string]bool{}
+	for _, r := range records {
+		got[key(r.Host)] = true
+	}
+	n, seen := 0, map[string]bool{}
+	for _, name := range names {
+		k := key(name)
+		if k == "" || seen[k] {
+			continue
+		}
+		seen[k] = true
+		if !got[k] {
+			n++
+		}
+	}
+	return n
+}
+
 // Args builds the dnsx command line. -rcode with every status makes dnsx write a line for names that
 // do not resolve too, and -omit-raw leaves the raw DNS messages out. Extra arguments (after -- on the
 // raijin-takeover command line) come last.

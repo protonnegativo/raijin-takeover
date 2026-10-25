@@ -46,11 +46,11 @@ Against dnsx's text output the result depends on the run, and it is not always s
 go install github.com/protonnegativo/raijin-takeover/cmd/raijin-takeover@latest
 ```
 
-This installs the latest release. You also need `dnsx` on `PATH`, or pass `--dnsx <path>`.
+This installs the latest release. You also need `dnsx` on `PATH`, or pass `--dnsx <path>`: dnsx 1.2.1 (`go install github.com/projectdiscovery/dnsx/cmd/dnsx@v1.2.1`), not 1.3.x, see [Engine versions](#engine-versions).
 
 ### Versions
 
-Releases are tagged automatically on every change and every passing engine update. `raijin-takeover --version` shows the release and the tested engine version, e.g. `raijin-takeover v0.1.3 (tested with dnsx 1.3.1)`. `raijin-mcp update` updates every Raijin tool at once.
+Releases are tagged automatically on every change and every passing engine update. `raijin-takeover --version` shows the release and the tested engine version, e.g. `raijin-takeover v0.1.3 (tested with dnsx 1.2.1)`. `raijin-mcp update` updates every Raijin tool at once.
 
 ## Usage
 
@@ -216,7 +216,9 @@ The Raijin banner is **off by default**, so normal runs stay small. `--banner` p
 
 ## Engine versions
 
-The tested dnsx version is in `engines.json` (built into the binary). Before a run, raijin-takeover asks dnsx for its version (`dnsx -version`) and adds an `engine_version` error when it is older than the tested one or a different major version; when dnsx writes lines without a `host` and a `status_code`, it adds an `engine_format` error and counts them in `omitted.unparsed`. Neither stops the run or changes the exit code. A weekly GitHub Actions job runs the live benchmark with the latest dnsx and commits the bump to `engines.json` and tags a release when it passes, or an issue when it breaks.
+The tested dnsx version is in `engines.json` (built into the binary). Before a run, raijin-takeover asks dnsx for its version (`dnsx -version`) and adds an `engine_version` error when it is older than the tested one or a different major version; when dnsx writes lines without a `host` and a `status_code`, it adds an `engine_format` error and counts them in `omitted.unparsed`. Neither stops the run or changes the exit code. A weekly GitHub Actions job runs the live benchmark with the latest dnsx and commits the bump to `engines.json` and tags a release when it passes, or an issue when it breaks. Before the benchmark it resolves a name that cannot exist (`raijin-drift-<random>.example`) with the same dnsx arguments and requires an `NXDOMAIN` line, and the dangling scenario must find the lab's six known dangling CNAMEs (`bench/lab/expected.txt`), not just lose nothing dnsx wrote.
+
+**dnsx 1.3.x drops NXDOMAIN names from its JSON.** Since dnsx v1.3.0 (projectdiscovery/dnsx#988), `-json` writes no line for a name without a record of the requested type, even with `-rcode`, so names that do not exist, and every dangling CNAME, vanish (fix proposed in [projectdiscovery/dnsx#1091](https://github.com/projectdiscovery/dnsx/pull/1091)). raijin-takeover pins dnsx 1.2.1 in `engines.json` and warns: dnsx versions in the known-bad range (`KnownBad` in [`engines.go`](engines.go), `>=1.3.0` until a fixed release exists) get an `engine_version` error even though they are newer, and when dnsx writes no line for some of the names it was given, those names are still listed (`NOANSWER`) and an `engine_format` error says how many. Install the tested version with `go install github.com/projectdiscovery/dnsx/cmd/dnsx@v1.2.1` or `raijin-mcp update --pinned`.
 
 ## Development
 

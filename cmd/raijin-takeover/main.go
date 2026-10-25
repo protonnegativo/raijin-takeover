@@ -246,8 +246,11 @@ func run(args []string, stdout, stderr io.Writer) int {
 		}
 		engines, _ := dnsx.Engines()
 		if path, err := exec.LookPath(*dnsxBin); err == nil {
-			// Never blocks the run: an untested version is a warning, an unknown one is silent.
-			if v := dnsx.Version(ctx, path); dnsx.Untested(v, engines["dnsx"].Version) {
+			// Never blocks the run: an untested or known-bad version is a warning, an unknown one is silent.
+			v := dnsx.Version(ctx, path)
+			if b, bad := dnsx.KnownBad(v); bad {
+				res.Errors = append(res.Errors, schema.Error{Kind: "engine_version", Hint: dnsx.KnownBadHint(v, b, engines["dnsx"])})
+			} else if dnsx.Untested(v, engines["dnsx"].Version) {
 				res.Errors = append(res.Errors, schema.Error{Kind: "engine_version", Hint: dnsx.VersionHint(v, engines["dnsx"])})
 			}
 		}
@@ -258,7 +261,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 		})
 		switch {
 		case errors.Is(err, dnsx.ErrNotFound):
-			res.Errors = append(res.Errors, schema.Error{Kind: "missing_engine", Hint: "install dnsx (go install github.com/projectdiscovery/dnsx/cmd/dnsx@latest) or pass --dnsx <path>; the names below are not resolved, or run raijin-mcp update"})
+			res.Errors = append(res.Errors, schema.Error{Kind: "missing_engine", Hint: "install dnsx (go install " + engines["dnsx"].Go + "@v" + engines["dnsx"].Version + ") or pass --dnsx <path>; the names below are not resolved, or run raijin-mcp update --pinned"})
 			opt.Resolved = false
 			code = 2
 		case err != nil:
@@ -268,6 +271,14 @@ func run(args []string, stdout, stderr io.Writer) int {
 			// Not represented anywhere else: counted, not dropped silently.
 			res.Omitted["unparsed"] += format.Bad
 			res.Errors = append(res.Errors, formatError(format, *rawPath))
+		}
+		// With -rcode dnsx writes a line for every name, resolved or not. A name with no line is still
+		// listed (NOANSWER), but dnsx lost its status: say so. Lines that did not parse are counted
+		// above, and a dnsx that failed is an engine_error already.
+		if err == nil {
+			if missing := dnsx.Missing(names, records) - format.Bad; missing > 0 {
+				res.Errors = append(res.Errors, schema.Error{Kind: "engine_format", Hint: dnsx.MissingHint(missing, len(names), engines["dnsx"])})
+			}
 		}
 	}
 

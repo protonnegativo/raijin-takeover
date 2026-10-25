@@ -1,0 +1,10 @@
+# Known answer of the dangling scenario: the dangling CNAMEs gen_zone.py puts in the lab zone (their
+# targets do not exist). Each must be a finding with this status; bench/known_answer.py checks it.
+# A dnsx that writes no line for NXDOMAIN names (1.3.x, projectdiscovery/dnsx#1091) fails here even
+# when verify.py reports 0 missing, because verify.py compares with that dnsx's own output.
+legacy.acme.example NXDOMAIN
+api-eu.acme.example NXDOMAIN
+tm.acme.example NXDOMAIN
+beanstalk.acme.example NXDOMAIN
+promo.acme.example NXDOMAIN
+old-cdn.acme.example NXDOMAIN
