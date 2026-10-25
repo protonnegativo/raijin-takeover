@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -26,7 +27,49 @@ import (
 	"github.com/protonnegativo/raijin-takeover/internal/state"
 )
 
-const version = "0.1.0"
+// version is the release this binary was built from; see buildVersion.
+var version = buildVersion(debug.ReadBuildInfo())
+
+// buildVersion returns the module version for a binary installed with go install ...@vX.Y.Z or
+// @latest, and "dev" with the VCS revision (and +dirty) for a local go build.
+func buildVersion(info *debug.BuildInfo, ok bool) string {
+	if !ok {
+		return "dev"
+	}
+	if v := info.Main.Version; v != "" && v != "(devel)" {
+		return v
+	}
+	v := "dev"
+	var rev string
+	var dirty bool
+	for _, s := range info.Settings {
+		switch s.Key {
+		case "vcs.revision":
+			rev = s.Value
+		case "vcs.modified":
+			dirty = s.Value == "true"
+		}
+	}
+	if rev != "" {
+		if len(rev) > 12 {
+			rev = rev[:12]
+		}
+		v += "-" + rev
+	}
+	if dirty {
+		v += "+dirty"
+	}
+	return v
+}
+
+// versionLine is the --version output: the release and the tested engine versions.
+func versionLine() string {
+	line := "raijin-takeover " + version
+	if engines, err := dnsx.Engines(); err == nil && engines["dnsx"].Version != "" {
+		line += " (tested with dnsx " + engines["dnsx"].Version + ")"
+	}
+	return line
+}
 
 type multi []string
 
@@ -71,7 +114,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 		banner.Write(stderr, "raijin-takeover", version, useColor(stderr))
 	}
 	if *showVersion {
-		fmt.Fprintln(stdout, "raijin-takeover", version)
+		fmt.Fprintln(stdout, versionLine())
 		return 0
 	}
 	if *scopeFile == "" {
@@ -215,7 +258,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 		})
 		switch {
 		case errors.Is(err, dnsx.ErrNotFound):
-			res.Errors = append(res.Errors, schema.Error{Kind: "missing_engine", Hint: "install dnsx (go install github.com/projectdiscovery/dnsx/cmd/dnsx@latest) or pass --dnsx <path>; the names below are not resolved"})
+			res.Errors = append(res.Errors, schema.Error{Kind: "missing_engine", Hint: "install dnsx (go install github.com/projectdiscovery/dnsx/cmd/dnsx@latest) or pass --dnsx <path>; the names below are not resolved, or run raijin-mcp update"})
 			opt.Resolved = false
 			code = 2
 		case err != nil:

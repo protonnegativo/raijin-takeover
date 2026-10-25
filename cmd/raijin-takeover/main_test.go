@@ -8,10 +8,24 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime/debug"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"testing"
+
+	"github.com/protonnegativo/raijin-takeover/internal/dnsx"
 )
+
+// tested is the dnsx version in engines.json, so the fakes keep answering it after a bump.
+func tested(t *testing.T) string {
+	t.Helper()
+	e, err := dnsx.Engines()
+	if err != nil || e["dnsx"].Version == "" {
+		t.Fatalf("engines.json: %v", err)
+	}
+	return e["dnsx"].Version
+}
 
 func scopeFile(t *testing.T) string {
 	t.Helper()
@@ -58,7 +72,7 @@ func TestBannerGoesToStderrOnly(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("exit %d", code)
 	}
-	if !strings.Contains(errb.String(), "TGT-LOCK") || !strings.Contains(errb.String(), "raijin-takeover v"+version) {
+	if !strings.Contains(errb.String(), "TGT-LOCK") || !strings.Contains(errb.String(), "raijin-takeover "+version) {
 		t.Errorf("banner missing or without the version: %q", errb.String())
 	}
 	if strings.Contains(out.String(), "TGT-LOCK") {
@@ -136,7 +150,7 @@ func fakeDnsx(t *testing.T) (bin, argsFile string) {
 	dir := t.TempDir()
 	argsFile = filepath.Join(dir, "args")
 	body := `#!/bin/sh
-[ "$1" = -version ] && { echo "[INF] Current Version: 1.2.1" >&2; exit 0; }
+[ "$1" = -version ] && { echo "[INF] Current Version: ` + tested(t) + `" >&2; exit 0; }
 echo "$@" > ` + argsFile + `
 while [ "$1" != "-l" ]; do shift; done
 while read -r n; do
@@ -364,8 +378,12 @@ func TestScopeAloneChecksWhatTheScopeNames(t *testing.T) {
 func TestEngineVersionAndFormatWarnings(t *testing.T) {
 	dir := t.TempDir()
 	fake := filepath.Join(dir, "dnsx")
+	// A different major version than the tested one is always a warning.
+	want := tested(t)
+	major, _ := strconv.Atoi(strings.SplitN(want, ".", 2)[0])
+	old := strconv.Itoa(major+1) + ".0.0"
 	script := `#!/bin/sh
-[ "$1" = -version ] && { echo "[INF] Current Version: 1.1.0" >&2; exit 0; }
+[ "$1" = -version ] && { echo "[INF] Current Version: ` + old + `" >&2; exit 0; }
 echo '{"host":"www.example.com","a":["192.0.2.1"],"status":"NOERROR"}'
 echo 'not json'
 `
@@ -384,7 +402,7 @@ echo 'not json'
 	if len(v.Errors) != 2 || v.Errors[0].Kind != "engine_version" || v.Errors[1].Kind != "engine_format" {
 		t.Fatalf("errors: %+v", v.Errors)
 	}
-	if want := "dnsx 1.1.0 is not the tested 1.2.1; results may be incomplete. Install the tested version: go install github.com/projectdiscovery/dnsx/cmd/dnsx@v1.2.1"; v.Errors[0].Hint != want {
+	if want := "dnsx " + old + " is not the tested " + want + "; results may be incomplete. Install the tested version: go install github.com/projectdiscovery/dnsx/cmd/dnsx@v" + want + ", or run raijin-mcp update"; v.Errors[0].Hint != want {
 		t.Errorf("hint %q", v.Errors[0].Hint)
 	}
 	if want := "2 of 2 dnsx results had no host and status_code; the engine's output format may have changed. Read " + raw + " for the full output"; v.Errors[1].Hint != want {
@@ -392,5 +410,37 @@ echo 'not json'
 	}
 	if v.Omitted["unparsed"] != 2 {
 		t.Errorf("omitted: %v", v.Omitted)
+	}
+}
+
+// A local go build has no module version: "dev", the short revision and +dirty.
+func TestBuildVersionFallback(t *testing.T) {
+	cases := []struct {
+		info *debug.BuildInfo
+		ok   bool
+		want string
+	}{
+		{&debug.BuildInfo{Main: debug.Module{Version: "v0.1.3"}}, true, "v0.1.3"},
+		{&debug.BuildInfo{Main: debug.Module{Version: "(devel)"}, Settings: []debug.BuildSetting{
+			{Key: "vcs.revision", Value: "0123456789abcdef0123"}, {Key: "vcs.modified", Value: "true"}}}, true, "dev-0123456789ab+dirty"},
+		{&debug.BuildInfo{Main: debug.Module{Version: "(devel)"}, Settings: []debug.BuildSetting{
+			{Key: "vcs.revision", Value: "0123456789abcdef0123"}, {Key: "vcs.modified", Value: "false"}}}, true, "dev-0123456789ab"},
+		{&debug.BuildInfo{}, true, "dev"},
+		{nil, false, "dev"},
+	}
+	for _, c := range cases {
+		if got := buildVersion(c.info, c.ok); got != c.want {
+			t.Errorf("buildVersion = %q, want %q", got, c.want)
+		}
+	}
+}
+
+func TestVersionLine(t *testing.T) {
+	var out, errb bytes.Buffer
+	if code := run([]string{"--version"}, &out, &errb); code != 0 {
+		t.Fatalf("exit %d: %s", code, errb.String())
+	}
+	if want := "raijin-takeover " + version + " (tested with dnsx " + tested(t) + ")\n"; out.String() != want {
+		t.Errorf("--version = %q, want %q", out.String(), want)
 	}
 }

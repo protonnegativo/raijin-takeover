@@ -78,6 +78,6 @@ func Untested(installed, tested string) bool {
 
 // VersionHint is the engine_version hint for an untested dnsx version.
 func VersionHint(installed string, e Engine) string {
-	return fmt.Sprintf("dnsx %s is not the tested %s; results may be incomplete. Install the tested version: go install %s@v%s",
+	return fmt.Sprintf("dnsx %s is not the tested %s; results may be incomplete. Install the tested version: go install %s@v%s, or run raijin-mcp update",
 		installed, e.Version, e.Go, e.Version)
 }

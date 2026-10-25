@@ -6,7 +6,7 @@ import (
 )
 
 func TestRenderPlainHasVersionAndAlignedHUD(t *testing.T) {
-	s := Render("raijin-takeover", "9.8.7", false)
+	s := Render("raijin-takeover", "v9.8.7", false)
 	if strings.Contains(s, "\x1b[") {
 		t.Error("plain banner must not contain ANSI codes")
 	}
