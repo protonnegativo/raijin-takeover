@@ -46,7 +46,11 @@ Against dnsx's text output the result depends on the run, and it is not always s
 go install github.com/protonnegativo/raijin-takeover/cmd/raijin-takeover@latest
 ```
 
-You also need `dnsx` on `PATH`, or pass `--dnsx <path>`.
+This installs the latest release. You also need `dnsx` on `PATH`, or pass `--dnsx <path>`.
+
+### Versions
+
+Releases are tagged automatically on every change and every passing engine update. `raijin-takeover --version` shows the release and the tested engine version, e.g. `raijin-takeover v0.1.3 (tested with dnsx 1.3.1)`. `raijin-mcp update` updates every Raijin tool at once.
 
 ## Usage
 
@@ -212,7 +216,7 @@ The Raijin banner is **off by default**, so normal runs stay small. `--banner` p
 
 ## Engine versions
 
-The tested dnsx version is in `engines.json` (built into the binary). Before a run, raijin-takeover asks dnsx for its version (`dnsx -version`) and adds an `engine_version` error when it is older than the tested one or a different major version; when dnsx writes lines without a `host` and a `status_code`, it adds an `engine_format` error and counts them in `omitted.unparsed`. Neither stops the run or changes the exit code. A weekly GitHub Actions job runs the live benchmark with the latest dnsx and opens a PR to bump `engines.json` when it passes, or an issue when it breaks.
+The tested dnsx version is in `engines.json` (built into the binary). Before a run, raijin-takeover asks dnsx for its version (`dnsx -version`) and adds an `engine_version` error when it is older than the tested one or a different major version; when dnsx writes lines without a `host` and a `status_code`, it adds an `engine_format` error and counts them in `omitted.unparsed`. Neither stops the run or changes the exit code. A weekly GitHub Actions job runs the live benchmark with the latest dnsx and commits the bump to `engines.json` and tags a release when it passes, or an issue when it breaks.
 
 ## Development
 
