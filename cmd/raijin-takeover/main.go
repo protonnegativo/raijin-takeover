@@ -12,6 +12,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"os/exec"
 	"os/signal"
 	"strings"
 	"time"
@@ -200,8 +201,16 @@ func run(args []string, stdout, stderr io.Writer) int {
 			fmt.Fprintln(stderr, "raijin-takeover:", err)
 			return 1
 		}
+		engines, _ := dnsx.Engines()
+		if path, err := exec.LookPath(*dnsxBin); err == nil {
+			// Never blocks the run: an untested version is a warning, an unknown one is silent.
+			if v := dnsx.Version(ctx, path); dnsx.Untested(v, engines["dnsx"].Version) {
+				res.Errors = append(res.Errors, schema.Error{Kind: "engine_version", Hint: dnsx.VersionHint(v, engines["dnsx"])})
+			}
+		}
 		var stderrTail string
-		records, stderrTail, err = dnsx.Run(ctx, names, dnsx.Options{
+		var format dnsx.Format
+		records, format, stderrTail, err = dnsx.Run(ctx, names, dnsx.Options{
 			Binary: *dnsxBin, Rate: *rate, Threads: *threads, Resolvers: *resolvers, Extra: fs.Args(), Raw: raw,
 		})
 		switch {
@@ -211,6 +220,11 @@ func run(args []string, stdout, stderr io.Writer) int {
 			code = 2
 		case err != nil:
 			res.Errors = append(res.Errors, engineError(err, stderrTail))
+		}
+		if format.Bad > 0 {
+			// Not represented anywhere else: counted, not dropped silently.
+			res.Omitted["unparsed"] += format.Bad
+			res.Errors = append(res.Errors, formatError(format, *rawPath))
 		}
 	}
 
@@ -270,6 +284,11 @@ func run(args []string, stdout, stderr io.Writer) int {
 	}
 	write(stdout, &res, *format, *pretty)
 	return code
+}
+
+// formatError is the engine_format error for dnsx lines without a host and a status_code.
+func formatError(f dnsx.Format, raw string) schema.Error {
+	return schema.Error{Kind: "engine_format", Hint: fmt.Sprintf("%d of %d dnsx results had no host and status_code; the engine's output format may have changed. Read %s for the full output", f.Bad, f.Lines, raw)}
 }
 
 func engineError(err error, stderrTail string) schema.Error {

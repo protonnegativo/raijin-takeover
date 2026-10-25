@@ -210,6 +210,10 @@ The Raijin banner is **off by default**, so normal runs stay small. `--banner` p
 | `--dnsx` | dnsx | path to the binary |
 | `--banner` | false | print the banner to stderr |
 
+## Engine versions
+
+The tested dnsx version is in `engines.json` (built into the binary). Before a run, raijin-takeover asks dnsx for its version (`dnsx -version`) and adds an `engine_version` error when it is older than the tested one or a different major version; when dnsx writes lines without a `host` and a `status_code`, it adds an `engine_format` error and counts them in `omitted.unparsed`. Neither stops the run or changes the exit code. A weekly GitHub Actions job runs the live benchmark with the latest dnsx and opens a PR to bump `engines.json` when it passes, or an issue when it breaks.
+
 ## Development
 
 ```bash

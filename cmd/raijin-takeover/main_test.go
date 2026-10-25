@@ -136,6 +136,7 @@ func fakeDnsx(t *testing.T) (bin, argsFile string) {
 	dir := t.TempDir()
 	argsFile = filepath.Join(dir, "args")
 	body := `#!/bin/sh
+[ "$1" = -version ] && { echo "[INF] Current Version: 1.2.1" >&2; exit 0; }
 echo "$@" > ` + argsFile + `
 while [ "$1" != "-l" ]; do shift; done
 while read -r n; do
@@ -356,5 +357,40 @@ func TestScopeAloneChecksWhatTheScopeNames(t *testing.T) {
 	}
 	if len(res.Next) != 1 || !strings.Contains(res.Next[0], "raijin-subs --scope "+scopePath+" -d example.com --raw subs.jsonl, then raijin-takeover --scope "+scopePath+" -l subs.jsonl") {
 		t.Errorf("next = %v", res.Next)
+	}
+}
+
+// An old dnsx whose JSON renamed status_code: the run goes on, with both warnings and the same exit code.
+func TestEngineVersionAndFormatWarnings(t *testing.T) {
+	dir := t.TempDir()
+	fake := filepath.Join(dir, "dnsx")
+	script := `#!/bin/sh
+[ "$1" = -version ] && { echo "[INF] Current Version: 1.1.0" >&2; exit 0; }
+echo '{"host":"www.example.com","a":["192.0.2.1"],"status":"NOERROR"}'
+echo 'not json'
+`
+	if err := os.WriteFile(fake, []byte(script), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	raw := filepath.Join(dir, "raw.jsonl")
+	var out, errb bytes.Buffer
+	if code := run([]string{"--scope", scopeFile(t), "-d", "www.example.com", "--dnsx", fake, "--raw", raw}, &out, &errb); code != 0 {
+		t.Fatalf("exit %d: %s %s", code, errb.String(), out.String())
+	}
+	var v output
+	if err := json.Unmarshal(out.Bytes(), &v); err != nil {
+		t.Fatal(err)
+	}
+	if len(v.Errors) != 2 || v.Errors[0].Kind != "engine_version" || v.Errors[1].Kind != "engine_format" {
+		t.Fatalf("errors: %+v", v.Errors)
+	}
+	if want := "dnsx 1.1.0 is not the tested 1.2.1; results may be incomplete. Install the tested version: go install github.com/projectdiscovery/dnsx/cmd/dnsx@v1.2.1"; v.Errors[0].Hint != want {
+		t.Errorf("hint %q", v.Errors[0].Hint)
+	}
+	if want := "2 of 2 dnsx results had no host and status_code; the engine's output format may have changed. Read " + raw + " for the full output"; v.Errors[1].Hint != want {
+		t.Errorf("hint %q", v.Errors[1].Hint)
+	}
+	if v.Omitted["unparsed"] != 2 {
+		t.Errorf("omitted: %v", v.Omitted)
 	}
 }

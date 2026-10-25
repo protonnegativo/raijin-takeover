@@ -47,25 +47,33 @@ type Options struct {
 	Raw io.Writer
 }
 
-// Run resolves the names and returns every record, plus the last stderr lines if dnsx failed.
-func Run(ctx context.Context, names []string, opt Options) ([]Record, string, error) {
+// Format counts dnsx's output lines and those without the fields Raijin needs (host and status_code),
+// non-JSON lines included: more than a few of those means dnsx's output format may have changed.
+type Format struct {
+	Lines, Bad int
+}
+
+// Run resolves the names and returns every record, the output line counts, plus the last stderr lines
+// if dnsx failed.
+func Run(ctx context.Context, names []string, opt Options) ([]Record, Format, string, error) {
+	var f Format
 	bin := opt.Binary
 	if bin == "" {
 		bin = "dnsx"
 	}
 	path, err := exec.LookPath(bin)
 	if err != nil {
-		return nil, "", ErrNotFound
+		return nil, f, "", ErrNotFound
 	}
 
 	list, err := os.CreateTemp("", "raijin-takeover-names-*.txt")
 	if err != nil {
-		return nil, "", err
+		return nil, f, "", err
 	}
 	defer os.Remove(list.Name())
 	if _, err := io.WriteString(list, strings.Join(names, "\n")+"\n"); err != nil {
 		list.Close()
-		return nil, "", err
+		return nil, f, "", err
 	}
 	list.Close()
 
@@ -74,24 +82,24 @@ func Run(ctx context.Context, names []string, opt Options) ([]Record, string, er
 	cmd.Stderr = &stderr
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		return nil, "", err
+		return nil, f, "", err
 	}
 	var r io.Reader = stdout
 	if opt.Raw != nil {
 		r = io.TeeReader(stdout, opt.Raw)
 	}
 	if err := cmd.Start(); err != nil {
-		return nil, "", err
+		return nil, f, "", err
 	}
-	records, parseErr := Parse(r)
+	records, parseErr := parse(r, &f)
 	waitErr := cmd.Wait()
 	if parseErr != nil {
-		return records, tail(stderr.String(), 3), parseErr
+		return records, f, tail(stderr.String(), 3), parseErr
 	}
 	if waitErr != nil {
-		return records, tail(stderr.String(), 3), fmt.Errorf("dnsx exited: %w", waitErr)
+		return records, f, tail(stderr.String(), 3), fmt.Errorf("dnsx exited: %w", waitErr)
 	}
-	return records, "", nil
+	return records, f, "", nil
 }
 
 // Args builds the dnsx command line. -rcode with every status makes dnsx write a line for names that
@@ -120,16 +128,22 @@ func Args(listFile string, opt Options) []string {
 // Parse reads dnsx JSONL. Lines that are not JSON objects with a host and a status_code are skipped,
 // so a file with other lines (subfinder output, HTTP checks) can be read by every parser.
 func Parse(r io.Reader) ([]Record, error) {
+	return parse(r, &Format{})
+}
+
+func parse(r io.Reader, f *Format) ([]Record, error) {
 	var records []Record
 	sc := bufio.NewScanner(r)
 	sc.Buffer(make([]byte, 0, 64*1024), 16*1024*1024)
 	for sc.Scan() {
 		line := bytes.TrimSpace(sc.Bytes())
-		if len(line) == 0 || line[0] != '{' {
+		if len(line) == 0 {
 			continue
 		}
+		f.Lines++
 		var rec Record
-		if err := json.Unmarshal(line, &rec); err != nil || rec.Host == "" || rec.StatusCode == "" {
+		if line[0] != '{' || json.Unmarshal(line, &rec) != nil || rec.Host == "" || rec.StatusCode == "" {
+			f.Bad++
 			continue
 		}
 		records = append(records, rec)
