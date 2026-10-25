@@ -1,0 +1,130 @@
+name: Engine drift
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      dnsx:
+        description: dnsx version to test (latest or vX.Y.Z)
+        default: latest
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Install dnsx
+        env:
+          WANT: ${{ inputs.dnsx || 'latest' }}
+        run: |
+          module=$(jq -r .dnsx.go engines.json)
+          go install "$module@$WANT"
+      - name: Installed versions
+        id: versions
+        run: |
+          installed=$(dnsx -version -duc 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+          tested=$(jq -r .dnsx.version engines.json)
+          echo "dnsx installed $installed, tested $tested"
+          echo "installed=$installed" >> "$GITHUB_OUTPUT"
+          echo "tested=$tested" >> "$GITHUB_OUTPUT"
+      - run: pip install tiktoken
+      - name: Live benchmark
+        id: bench
+        env:
+          LIVE: "1"
+          PY: python3
+        run: |
+          W="$RUNNER_TEMP/bench"
+          set +e
+          bench/run.sh "$W" > "$RUNNER_TEMP/bench.txt" 2>&1
+          status=$?
+          set -e
+          cat "$RUNNER_TEMP/bench.txt"
+          grep -E 'missing from output|MISSING' "$RUNNER_TEMP/bench.txt" > "$RUNNER_TEMP/verify.txt" || true
+          grep -h '"engine_format"' "$W"/*.live.json >> "$RUNNER_TEMP/verify.txt" && status=1
+          if [ "$status" != 0 ] || grep -qE 'MISSING|[1-9][0-9]* missing from output' "$RUNNER_TEMP/verify.txt" \
+            || [ "$(grep -c ' 0 missing from output' "$RUNNER_TEMP/verify.txt")" != 3 ]; then
+            echo "bench run exited $status" >> "$RUNNER_TEMP/verify.txt"
+            exit 1
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bench-live
+          path: ${{ runner.temp }}/bench
+          retention-days: 14
+      - name: Open or update the drift issue
+        if: failure()
+        env:
+          INSTALLED: ${{ steps.versions.outputs.installed }}
+        run: |
+          gh label create engine-drift --color B60205 --description "An engine update broke the tool" 2>/dev/null || true
+          {
+            echo "The live benchmark failed with dnsx $INSTALLED."
+            echo
+            echo '```'
+            cat "$RUNNER_TEMP/verify.txt" 2>/dev/null || echo "(no verify output)"
+            echo '```'
+            echo
+            echo "Run: $RUN_URL"
+          } > "$RUNNER_TEMP/issue.md"
+          open=$(gh issue list --label engine-drift --state open --json number --jq '.[0].number')
+          if [ -n "$open" ]; then
+            gh issue comment "$open" --body-file "$RUNNER_TEMP/issue.md"
+          else
+            gh issue create --title "Engine drift: dnsx $INSTALLED" --label engine-drift --body-file "$RUNNER_TEMP/issue.md"
+          fi
+      - name: Open or update the bump PR
+        if: success()
+        env:
+          INSTALLED: ${{ steps.versions.outputs.installed }}
+          TESTED: ${{ steps.versions.outputs.tested }}
+        run: |
+          newer=$(printf '%s\n%s\n' "$TESTED" "$INSTALLED" | sort -V | tail -1)
+          if [ -z "$INSTALLED" ] || [ "$INSTALLED" = "$TESTED" ] || [ "$newer" != "$INSTALLED" ]; then
+            echo "dnsx $INSTALLED is not newer than the tested $TESTED"
+            exit 0
+          fi
+          branch="engine-bump/dnsx-$INSTALLED"
+          # Only engines.json: the refreshed fixtures are in the artifact, BENCHMARK.md keeps its numbers.
+          git checkout -- bench
+          jq --arg v "$INSTALLED" '.dnsx.version = $v' engines.json > engines.json.new
+          python3 - engines.json.new <<'PY'
+          import json, sys
+          d = json.load(open(sys.argv[1]))
+          with open("engines.json", "w") as f:
+              f.write("{\n" + ",\n".join(f'  "{k}": {json.dumps(v, separators=(", ", ": "))}' for k, v in d.items()) + "\n}\n")
+          PY
+          rm engines.json.new
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$branch"
+          git commit -am "Test with dnsx $INSTALLED"
+          git push -f origin "$branch"
+          {
+            echo "dnsx $TESTED → $INSTALLED"
+            echo
+            echo '```'
+            cat "$RUNNER_TEMP/verify.txt"
+            echo '```'
+            echo
+            echo "Run: $RUN_URL (the refreshed fixtures are in the bench-live artifact)"
+          } > "$RUNNER_TEMP/pr.md"
+          if [ -n "$(gh pr list --head "$branch" --state open --json number --jq '.[0].number')" ]; then
+            gh pr edit "$branch" --body-file "$RUNNER_TEMP/pr.md"
+          else
+            gh pr create --head "$branch" --title "Test with dnsx $INSTALLED" --body-file "$RUNNER_TEMP/pr.md"
+          fi

@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go vet ./...
+      - run: test -z "$(gofmt -l .)"
+      - run: go test ./...
+      - run: pip install tiktoken
+      - name: Offline benchmark
+        env:
+          PY: python3
+        run: |
+          bench/run.sh "$RUNNER_TEMP/bench" | tee "$RUNNER_TEMP/bench.txt"
+          if grep -E 'MISSING|[1-9][0-9]* missing from output' "$RUNNER_TEMP/bench.txt"; then exit 1; fi
+          test "$(grep -c ' 0 missing from output' "$RUNNER_TEMP/bench.txt")" = 3
