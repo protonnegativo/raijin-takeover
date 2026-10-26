@@ -3,6 +3,8 @@ package dnsx
 import (
 	"strings"
 	"testing"
+
+	raijintakeover "github.com/protonnegativo/raijin-takeover"
 )
 
 func TestEngines(t *testing.T) {
@@ -97,5 +99,23 @@ func TestMissing(t *testing.T) {
 	recs := []Record{{Host: "a.example.com", StatusCode: "NOERROR"}, {Host: "B.example.com.", StatusCode: "NXDOMAIN"}}
 	if n := Missing([]string{"a.example.com", "b.example.com", "c.example.com", "C.example.com", ""}, recs); n != 1 {
 		t.Errorf("Missing = %d, want 1", n)
+	}
+}
+
+// raijin-mcp update reads "below" from engines.json, the tool reads KnownBad: an open range ">=X" is
+// "below": "X", and a bound is only set for a known-bad range.
+func TestBelowMatchesKnownBad(t *testing.T) {
+	m, err := Engines()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, e := range m {
+		want := ""
+		if b, ok := raijintakeover.KnownBad[name]; ok && strings.HasPrefix(b.Range, ">=") && !strings.Contains(b.Range, ",") {
+			want = strings.TrimPrefix(b.Range, ">=")
+		}
+		if e.Below != want {
+			t.Errorf("engines.json %s below %q, want %q from KnownBad", name, e.Below, want)
+		}
 	}
 }

@@ -19,6 +19,9 @@ type Engine struct {
 	Go      string `json:"go,omitempty"`
 	Pip     string `json:"pip,omitempty"`
 	System  string `json:"system,omitempty"`
+	// Below is the bound of an open KnownBad range (">=1.3.0" is "below": "1.3.0"), for raijin-mcp
+	// update, which installs only versions lower than it.
+	Below string `json:"below,omitempty"`
 }
 
 // Engines parses the embedded engines.json.
