@@ -10,51 +10,24 @@
 // to decide whether a dangling record can be taken over.
 package schema
 
-import (
-	"bytes"
-	"encoding/json"
+import core "github.com/protonnegativo/raijin-core/schema"
+
+// The envelope (Result, Error, Budget, Marshal and the rank tables) lives in raijin-core; the aliases keep
+// the call sites unchanged. Finding and Group stay here: their fields are this tool's contract.
+type (
+	// Result is the top-level object raijin-takeover writes to stdout.
+	Result = core.Result[Finding, Group]
+	// Error is a problem during the run, with a hint about what to try next.
+	Error = core.Error
+	// Budget reports the output limits that were applied.
+	Budget = core.Budget
 )
 
-// Marshal is json.Marshal without HTML escaping: "->" stays "->" instead of "->", which costs
-// tokens and nothing else.
-func Marshal(v any) ([]byte, error) {
-	var b bytes.Buffer
-	enc := json.NewEncoder(&b)
-	enc.SetEscapeHTML(false)
-	if err := enc.Encode(v); err != nil {
-		return nil, err
-	}
-	return bytes.TrimSuffix(b.Bytes(), []byte("\n")), nil
-}
-
-// Result is the top-level object a Raijin tool writes to stdout.
-type Result struct {
-	Tool     string         `json:"tool"`
-	Version  string         `json:"version"`
-	Target   string         `json:"target"`
-	Summary  string         `json:"summary"`
-	Findings []Finding      `json:"findings"`
-	Groups   []Group        `json:"groups"`
-	Omitted  map[string]int `json:"omitted,omitempty"`
-	Errors   []Error        `json:"errors,omitempty"`
-	Next     []string       `json:"next,omitempty"`
-	// Raw is the file with the engine's full output, for details the result leaves out.
-	Raw    string `json:"raw,omitempty"`
-	Budget Budget `json:"budget"`
-}
-
-// MarshalJSON writes the budget only when something was cut.
-func (r Result) MarshalJSON() ([]byte, error) {
-	type plain Result
-	out := struct {
-		plain
-		Budget *Budget `json:"budget,omitempty"`
-	}{plain: plain(r)}
-	if r.Budget.Truncated {
-		out.Budget = &r.Budget
-	}
-	return Marshal(out)
-}
+var (
+	Marshal        = core.Marshal
+	SeverityRank   = core.SeverityRank
+	ConfidenceRank = core.ConfidenceRank
+)
 
 // Answer is what every name in a finding or group resolved to, plus the HTTP check when one ran. Zero
 // values are left out: no status means NOERROR with at least one record, no cname means the name has no
@@ -105,9 +78,7 @@ type Finding struct {
 func (f Finding) MarshalJSON() ([]byte, error) {
 	type plain Finding
 	p := plain(f)
-	if p.Count <= len(p.Locations) {
-		p.Count = 0
-	}
+	p.Count = core.OmitCount(p.Count, len(p.Locations))
 	return Marshal(p)
 }
 
@@ -125,38 +96,6 @@ type Group struct {
 func (g Group) MarshalJSON() ([]byte, error) {
 	type plain Group
 	p := plain(g)
-	if p.Count <= len(p.Locations) {
-		p.Count = 0
-	}
+	p.Count = core.OmitCount(p.Count, len(p.Locations))
 	return Marshal(p)
-}
-
-// Error is a problem during the run, with a hint about what to try next.
-type Error struct {
-	Kind string `json:"kind"`
-	Hint string `json:"hint"`
-}
-
-// Budget reports the output limits that were applied.
-type Budget struct {
-	MaxItems  int  `json:"max_items"`
-	MaxBytes  int  `json:"max_bytes"`
-	Truncated bool `json:"truncated"`
-}
-
-// SeverityRank orders severities from most to least important.
-var SeverityRank = map[string]int{
-	"critical": 5,
-	"high":     4,
-	"medium":   3,
-	"low":      2,
-	"info":     1,
-	"unknown":  0,
-}
-
-// ConfidenceRank orders confidence values: a verified finding before a matched one before a heuristic one.
-var ConfidenceRank = map[string]int{
-	"verified":  2,
-	"":          1,
-	"heuristic": 0,
 }

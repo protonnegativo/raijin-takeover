@@ -2,7 +2,7 @@
 # Tags HEAD with the next release and creates its GitHub Release.
 #
 # usage: .github/release.sh [patch|minor|major]   (default patch; the first release is v0.1.0)
-# needs: a full clone (fetch-depth: 0), gh, GH_TOKEN; pushes the tag to origin.
+# needs: a full clone (fetch-depth: 0), gh, GH_TOKEN (with actions: write); pushes the tag to origin.
 # Called by release.yml and by the engine drift job, whose pushes do not trigger other workflows.
 set -euo pipefail
 
@@ -32,4 +32,6 @@ git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 git tag -a "$next" -m "$next"
 git push origin "$next"
 gh release create "$next" --verify-tag --generate-notes --title "$next"
+# A tag and a Release made with GITHUB_TOKEN start no workflow: build the binaries explicitly.
+gh workflow run goreleaser.yml -f tag="$next"
 echo "released $next"

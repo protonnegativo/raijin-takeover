@@ -5,7 +5,6 @@ package main
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -18,21 +17,30 @@ import (
 	"strings"
 	"time"
 
+	coreschema "github.com/protonnegativo/raijin-core/schema"
+	"github.com/protonnegativo/raijin-core/scope"
+	"github.com/protonnegativo/raijin-core/state"
 	"github.com/protonnegativo/raijin-takeover/internal/banner"
 	"github.com/protonnegativo/raijin-takeover/internal/dnsx"
 	"github.com/protonnegativo/raijin-takeover/internal/httpcheck"
 	"github.com/protonnegativo/raijin-takeover/internal/reduce"
 	"github.com/protonnegativo/raijin-takeover/internal/schema"
-	"github.com/protonnegativo/raijin-takeover/internal/scope"
-	"github.com/protonnegativo/raijin-takeover/internal/state"
 )
+
+// releaseVersion is set at link time for a release build:
+// go build -ldflags "-X main.releaseVersion=v1.2.3". It stays empty otherwise. It is a separate
+// variable because -X does not set a variable that is initialized by a function call.
+var releaseVersion string
 
 // version is the release this binary was built from; see buildVersion.
 var version = buildVersion(debug.ReadBuildInfo())
 
-// buildVersion returns the module version for a binary installed with go install ...@vX.Y.Z or
-// @latest, and "dev" with the VCS revision (and +dirty) for a local go build.
+// buildVersion returns releaseVersion when the build set it, the module version for a binary installed
+// with go install ...@vX.Y.Z or @latest, and "dev" with the VCS revision (and +dirty) for a local go build.
 func buildVersion(info *debug.BuildInfo, ok bool) string {
+	if releaseVersion != "" {
+		return releaseVersion
+	}
 	if !ok {
 		return "dev"
 	}
@@ -104,7 +112,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 	showVersion := fs.Bool("version", false, "print the version")
 	showBanner := fs.Bool("banner", false, "print the Raijin banner to stderr (off by default to keep output small)")
 	fs.Usage = func() {
-		fmt.Fprintf(stderr, "usage: raijin-takeover --scope scope.txt [-d name | -l names.txt | --input dnsx.jsonl] [flags] [-- extra dnsx args]\n\nWith no targets it checks every host the scope names.\n\n")
+		fmt.Fprintf(stderr, "usage: raijin-takeover --scope scope.txt [-d name | -l names.txt | --input dnsx.jsonl] [flags] [-- extra dnsx args]\n\nWith no targets it checks every host the scope names.\n\nExit codes: 0 ok; 1 wrong usage; 2 structured error (invalid scope, dnsx missing), the JSON on stdout says which.\n\n")
 		fs.PrintDefaults()
 	}
 	if err := fs.Parse(args); err != nil {
@@ -121,12 +129,6 @@ func run(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "raijin-takeover: --scope is required")
 		return 1
 	}
-	sc, err := scope.Load(*scopeFile)
-	if err != nil {
-		fmt.Fprintln(stderr, "raijin-takeover: scope:", err)
-		return 1
-	}
-
 	res := schema.Result{
 		Tool:     "raijin-takeover",
 		Version:  version,
@@ -137,6 +139,16 @@ func run(args []string, stdout, stderr io.Writer) int {
 		Next:     []string{},
 		Budget:   schema.Budget{MaxItems: *maxItems, MaxBytes: *maxBytes},
 	}
+	sc, err := scope.Load(*scopeFile)
+	if err != nil {
+		// An invalid scope is an error an agent can fix: every bad line, structured, before anything runs.
+		res.Target = *scopeFile
+		res.Summary = "invalid scope file, nothing scanned"
+		res.Errors = append(res.Errors, scope.SchemaErrors(err)...)
+		write(stdout, &res, *format, *pretty)
+		return 2
+	}
+
 	opt := reduce.Defaults()
 	opt.MaxItems = *maxItems
 	opt.MaxBytes = *maxBytes
@@ -233,8 +245,9 @@ func run(args []string, stdout, stderr io.Writer) int {
 			if len(res.Next) > 0 {
 				res.Summary = "the scope names no single host to scan"
 				res.Target = *scopeFile
+				res.Errors = append(res.Errors, schema.Error{Kind: "no_targets", Hint: "the scope has only wildcards, which name no host: pass -d <name> or -l <names.txt>, or enumerate them first (see next)"})
 				write(stdout, &res, *format, *pretty)
-				return 1
+				return 2
 			}
 			fmt.Fprintln(stderr, "raijin-takeover: no names in scope")
 			return 1
@@ -312,7 +325,9 @@ func run(args []string, stdout, stderr io.Writer) int {
 		if err != nil {
 			res.Errors = append(res.Errors, schema.Error{Kind: "state_error", Hint: err.Error()})
 		} else {
-			newCount = st.Mark(res.Findings, allLocations)
+			newCount = state.Mark(st, res.Findings, allLocations,
+				func(f *schema.Finding) string { return f.StateKey },
+				func(f *schema.Finding) { f.New = true })
 			if err := st.Save(*statePath); err != nil {
 				res.Errors = append(res.Errors, schema.Error{Kind: "state_error", Hint: err.Error()})
 			}
@@ -467,12 +482,7 @@ func write(w io.Writer, res *schema.Result, format string, pretty bool) {
 		}
 		return
 	}
-	enc := json.NewEncoder(w)
-	enc.SetEscapeHTML(false)
-	if pretty {
-		enc.SetIndent("", "  ")
-	}
-	_ = enc.Encode(res)
+	_ = coreschema.Write(w, res, pretty)
 }
 
 // describe is a one-line view of an answer for the table: the status, the CNAME target, the provider,

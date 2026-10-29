@@ -28,6 +28,9 @@ func TestDerivableFieldsAreLeftOut(t *testing.T) {
 	if strings.Contains(string(b), "null") {
 		t.Errorf("no null values: %s", b)
 	}
+	if !strings.HasPrefix(string(b), `{"schema_version":1,"tool":"raijin-takeover",`) {
+		t.Errorf("schema_version must come first: %s", b)
+	}
 }
 
 func TestAnswerFieldsAreInline(t *testing.T) {

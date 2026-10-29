@@ -1,5 +1,11 @@
 # ⚡ Raijin Takeover
 
+[![CI](https://github.com/protonnegativo/raijin-takeover/actions/workflows/ci.yml/badge.svg)](https://github.com/protonnegativo/raijin-takeover/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/protonnegativo/raijin-takeover)](https://github.com/protonnegativo/raijin-takeover/releases/latest)
+[![License: MIT](https://img.shields.io/github/license/protonnegativo/raijin-takeover)](LICENSE)
+[![Go Reference](https://pkg.go.dev/badge/github.com/protonnegativo/raijin-takeover.svg)](https://pkg.go.dev/github.com/protonnegativo/raijin-takeover)
+[![Go Report Card](https://goreportcard.com/badge/github.com/protonnegativo/raijin-takeover)](https://goreportcard.com/report/github.com/protonnegativo/raijin-takeover)
+
 **dnsx plus a provider fingerprint table for AI agents: every name with its DNS answer, dangling CNAMEs ranked first with the provider and the claim hint.**
 
 `raijin-takeover` is a tool of **Raijin**, an arsenal of offensive security tools built for AI agents. It resolves every name with [dnsx](https://github.com/projectdiscovery/dnsx), matches each CNAME chain against a native table of takeover-prone providers (after the public [can-i-take-over-xyz](https://github.com/EdOverflow/can-i-take-over-xyz) list: GitHub Pages, S3, Heroku, Azure, Fastly, Shopify, Netlify, Zendesk and more, 72 services in all), and returns the **Raijin Schema**: one compact JSON where a CNAME that ends in NXDOMAIN on a claimable provider is a high finding with the way to claim it, a CNAME into a provider recognised by its "unclaimed" page is a medium finding with the text to look for, and every other name is still listed, in groups of names that share an answer.
@@ -12,19 +18,19 @@ Here are the same names, with the same records, read by an agent (tokens, `o200k
 
 ```
 Noisy: hackerone.com names, 510 names, 498 that do not resolve
-  raijin-takeover █▏                      4,973 tokens
+  raijin-takeover █▏                      4,996 tokens
   dnsx text       ▍                       1,640 tokens
   text + status   █▋                      7,043 tokens
   dnsx JSON       ████████████████████   86,665 tokens
 
 Providers: gitlab.com names, 830 names, 81 answers, none claimable
-  raijin-takeover █▋                     16,220 tokens
+  raijin-takeover █▋                     16,243 tokens
   dnsx text       █▏                     10,415 tokens
   text + status   ██▍                    23,297 tokens
   dnsx JSON       ████████████████████  193,586 tokens
 
 Dangling: synthetic lab zone, 271 names, 13 takeover candidates
-  raijin-takeover ██▌                     3,357 tokens
+  raijin-takeover ██▌                     3,380 tokens
   dnsx text       ██████▎                 8,565 tokens
   text + status   ████████▏              10,998 tokens
   dnsx JSON       ████████████████████   27,163 tokens
@@ -38,7 +44,7 @@ raijin-takeover reads **8× to 17×** fewer tokens than dnsx's JSON (`-json -omi
 - **Output is bounded.** On a huge run, `--max-bytes` cuts the least important data first (names that do not resolve) and counts every cut.
 - **Details are one file away.** dnsx's full JSONL and the HTTP checks are saved to disk, and the path is in `raw`. It costs no tokens until the agent opens it, and replays with `--input`.
 
-Against dnsx's text output the result depends on the run, and it is not always smaller. The text has no status line and leaves out every name that does not resolve, so on the noisy run it is **3.0×** smaller than raijin-takeover and on the providers run **1.6×** smaller; on the dangling run raijin-takeover is **2.6×** smaller. With the status run an agent needs to see which CNAMEs are dangling (`dnsx -rcode ...`), raijin-takeover is **1.4×** smaller on the public runs and **3.3×** on the dangling run. Full method and numbers are in [BENCHMARK.md](BENCHMARK.md), and `bench/run.sh` reproduces them.
+Against dnsx's text output the result depends on the run, and it is not always smaller. The text has no status line and leaves out every name that does not resolve, so on the noisy run it is **3.0×** smaller than raijin-takeover and on the providers run **1.6×** smaller; on the dangling run raijin-takeover is **2.5×** smaller. With the status run an agent needs to see which CNAMEs are dangling (`dnsx -rcode ...`), raijin-takeover is **1.4×** smaller on the public runs and **3.3×** on the dangling run. Full method and numbers are in [BENCHMARK.md](BENCHMARK.md), and `bench/run.sh` reproduces them.
 
 ## Install
 
@@ -85,8 +91,9 @@ Names outside the scope are dropped before dnsx resolves them, and records and c
 
 ```json
 {
+  "schema_version": 1,
   "tool": "raijin-takeover",
-  "version": "0.1.0",
+  "version": "v0.1.3",
   "target": "bench/fixtures/dangling/raw.jsonl, bench/lab/names.txt",
   "summary": "271 names, 185 resolve, 13 takeover candidates (10 high, 2 medium, 1 low), 13 groups",
   "findings": [
@@ -179,6 +186,9 @@ What the reducer does:
 
   Every cut is counted in `omitted`, `budget.truncated` is set, and `next` points to the raw file. `--max-items` caps the number of findings (0, the default, keeps all).
 - **Errors** say what to try next. If dnsx is missing, every name is still listed as `UNCHECKED`, with the hint in `errors`, and the exit code is 2.
+- **`schema_version`** is the first field of every result (1 today), the version of the result format.
+- **An invalid scope** is reported before anything runs: `errors` holds one `kind: "scope"` entry per bad line (`line 2: port in rule 'example.com:443'; ...`), so the agent can fix the whole file at once, and nothing is resolved.
+- **Exit codes:** 0 ok; 1 wrong usage (bad flag, missing argument or input); 2 a structured error with the JSON on stdout (invalid scope, `no_targets` when the scope has only wildcards, dnsx missing), told apart by `errors[].kind`. Exit 1 never prints JSON.
 
 **No `-cname` for dnsx, on purpose.** dnsx writes the CNAME chain from the A and AAAA answers already. With `-cname` it also sends a CNAME query, which a resolver answers NOERROR even when the chain ends at a name that does not exist, and dnsx v1.2.1 then reports NOERROR instead of the A query's NXDOMAIN: the one status that makes a CNAME dangling is lost. The benchmark lab shows it (`legacy.acme.example` is `NXDOMAIN` with `-a`, `NOERROR` with `-a -cname`). A CNAME into a claimable provider with no address and NOERROR is still a `no-address` finding, so input collected with `-cname` does not hide those names.
 
@@ -227,7 +237,7 @@ go test ./...
 go vet ./...
 ```
 
-Standard library only. dnsx runs as a subprocess with `-a -aaaa -resp -json -silent -nc -duc -omit-raw -rcode noerror,formerr,servfail,nxdomain,notimp,refused`, so the binary stays small and dnsx can be updated on its own. `-rcode` with every status makes dnsx write a line for the names that do not resolve too. The CLI tests run the live path offline with a small fake dnsx and a page server on 127.0.0.1 (ports 19400-19449); `testdata/sample.jsonl` is a synthetic run that hits every rule. `bench/lab/lab.py` is a local DNS resolver and provider page server for the synthetic zone of the benchmark.
+Only raijin-core as a Go dependency (the scope, state and result envelope shared by the Raijin tools). dnsx runs as a subprocess with `-a -aaaa -resp -json -silent -nc -duc -omit-raw -rcode noerror,formerr,servfail,nxdomain,notimp,refused`, so the binary stays small and dnsx can be updated on its own. `-rcode` with every status makes dnsx write a line for the names that do not resolve too. The CLI tests run the live path offline with a small fake dnsx and a page server on 127.0.0.1 (ports 19400-19449); `testdata/sample.jsonl` is a synthetic run that hits every rule. `bench/lab/lab.py` is a local DNS resolver and provider page server for the synthetic zone of the benchmark.
 
 ## Responsible use
 
