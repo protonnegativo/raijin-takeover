@@ -7,11 +7,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/protonnegativo/raijin-core/scope"
 	"github.com/protonnegativo/raijin-takeover/internal/dnsx"
 	"github.com/protonnegativo/raijin-takeover/internal/fingerprint"
 	"github.com/protonnegativo/raijin-takeover/internal/httpcheck"
 	"github.com/protonnegativo/raijin-takeover/internal/schema"
-	"github.com/protonnegativo/raijin-takeover/internal/scope"
 )
 
 func load(t *testing.T) ([]string, []dnsx.Record, []httpcheck.Check) {

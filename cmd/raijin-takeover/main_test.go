@@ -490,3 +490,53 @@ echo '{"host":"www.example.com","a":["192.0.2.1"],"status_code":"NOERROR"}'
 		t.Errorf("gone.example.com must still be listed, as NOANSWER: %s", out.String())
 	}
 }
+
+// An invalid scope is an error an agent can fix: every bad line is reported at once, as JSON on stdout,
+// and nothing runs (no dnsx, no raw file).
+func TestInvalidScopeIsStructuredAndRunsNothing(t *testing.T) {
+	p := filepath.Join(t.TempDir(), "scope.txt")
+	body := "example.com\nexample.com:443\n10.0.0.7/24\n*example.com\n"
+	if err := os.WriteFile(p, []byte(body), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	var out, errb bytes.Buffer
+	code := run([]string{"--scope", p, "-d", "example.com", "--dnsx", "/nonexistent/dnsx"}, &out, &errb)
+	if code == 0 {
+		t.Fatalf("exit 0 with an invalid scope: %s", out.String())
+	}
+	if !strings.HasPrefix(out.String(), `{"schema_version":1,"tool":"raijin-takeover",`) {
+		t.Errorf("output must be a result: %s", out.String())
+	}
+	var o output
+	if err := json.Unmarshal(out.Bytes(), &o); err != nil {
+		t.Fatal(err)
+	}
+	if o.Summary != "invalid scope file, nothing scanned" || len(o.Findings) != 0 || len(o.Groups) != 0 || o.Raw != "" {
+		t.Errorf("nothing may run: %s", out.String())
+	}
+	if len(o.Errors) != 3 {
+		t.Fatalf("want one error per invalid line (3), got %d: %s", len(o.Errors), out.String())
+	}
+	for i, want := range []string{"line 2", "line 3", "line 4"} {
+		if o.Errors[i].Kind != "scope" || !strings.Contains(o.Errors[i].Hint, want) {
+			t.Errorf("error %d = %+v, want kind scope and %q", i, o.Errors[i], want)
+		}
+	}
+	if !strings.Contains(o.Errors[0].Hint, "port in rule") || !strings.Contains(o.Errors[1].Hint, "host bits") {
+		t.Errorf("hints: %+v", o.Errors)
+	}
+	for _, e := range o.Errors {
+		if strings.Contains(e.Kind, "engine") {
+			t.Errorf("no engine ran, got %+v", e)
+		}
+	}
+}
+
+func TestUnreadableScopeIsStructured(t *testing.T) {
+	var out, errb bytes.Buffer
+	code := run([]string{"--scope", filepath.Join(t.TempDir(), "missing.txt"), "-d", "example.com"}, &out, &errb)
+	var o output
+	if code == 0 || json.Unmarshal(out.Bytes(), &o) != nil || len(o.Errors) != 1 || o.Errors[0].Kind != "scope" {
+		t.Errorf("exit %d, output %s", code, out.String())
+	}
+}
