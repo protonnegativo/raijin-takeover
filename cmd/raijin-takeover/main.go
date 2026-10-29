@@ -112,7 +112,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 	showVersion := fs.Bool("version", false, "print the version")
 	showBanner := fs.Bool("banner", false, "print the Raijin banner to stderr (off by default to keep output small)")
 	fs.Usage = func() {
-		fmt.Fprintf(stderr, "usage: raijin-takeover --scope scope.txt [-d name | -l names.txt | --input dnsx.jsonl] [flags] [-- extra dnsx args]\n\nWith no targets it checks every host the scope names.\n\n")
+		fmt.Fprintf(stderr, "usage: raijin-takeover --scope scope.txt [-d name | -l names.txt | --input dnsx.jsonl] [flags] [-- extra dnsx args]\n\nWith no targets it checks every host the scope names.\n\nExit codes: 0 ok; 1 wrong usage; 2 structured error (invalid scope, dnsx missing), the JSON on stdout says which.\n\n")
 		fs.PrintDefaults()
 	}
 	if err := fs.Parse(args); err != nil {
@@ -146,7 +146,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 		res.Summary = "invalid scope file, nothing scanned"
 		res.Errors = append(res.Errors, scope.SchemaErrors(err)...)
 		write(stdout, &res, *format, *pretty)
-		return 1
+		return 2
 	}
 
 	opt := reduce.Defaults()

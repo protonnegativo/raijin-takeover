@@ -501,10 +501,10 @@ func TestInvalidScopeIsStructuredAndRunsNothing(t *testing.T) {
 	}
 	var out, errb bytes.Buffer
 	code := run([]string{"--scope", p, "-d", "example.com", "--dnsx", "/nonexistent/dnsx"}, &out, &errb)
-	if code == 0 {
-		t.Fatalf("exit 0 with an invalid scope: %s", out.String())
+	if code != 2 {
+		t.Fatalf("exit %d with an invalid scope, want 2: %s", code, out.String())
 	}
-	if !strings.HasPrefix(out.String(), `{"schema_version":1,"tool":"raijin-takeover",`) {
+	if !strings.HasPrefix(out.String(), `{"schema_version":1,`) || !strings.HasPrefix(out.String(), `{"schema_version":1,"tool":"raijin-takeover",`) {
 		t.Errorf("output must be a result: %s", out.String())
 	}
 	var o output
@@ -536,7 +536,7 @@ func TestUnreadableScopeIsStructured(t *testing.T) {
 	var out, errb bytes.Buffer
 	code := run([]string{"--scope", filepath.Join(t.TempDir(), "missing.txt"), "-d", "example.com"}, &out, &errb)
 	var o output
-	if code == 0 || json.Unmarshal(out.Bytes(), &o) != nil || len(o.Errors) != 1 || o.Errors[0].Kind != "scope" {
+	if code != 2 || json.Unmarshal(out.Bytes(), &o) != nil || len(o.Errors) != 1 || o.Errors[0].Kind != "scope" {
 		t.Errorf("exit %d, output %s", code, out.String())
 	}
 }
