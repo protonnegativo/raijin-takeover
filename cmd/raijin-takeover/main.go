@@ -27,12 +27,20 @@ import (
 	"github.com/protonnegativo/raijin-takeover/internal/schema"
 )
 
+// releaseVersion is set at link time for a release build:
+// go build -ldflags "-X main.releaseVersion=v1.2.3". It stays empty otherwise. It is a separate
+// variable because -X does not set a variable that is initialized by a function call.
+var releaseVersion string
+
 // version is the release this binary was built from; see buildVersion.
 var version = buildVersion(debug.ReadBuildInfo())
 
-// buildVersion returns the module version for a binary installed with go install ...@vX.Y.Z or
-// @latest, and "dev" with the VCS revision (and +dirty) for a local go build.
+// buildVersion returns releaseVersion when the build set it, the module version for a binary installed
+// with go install ...@vX.Y.Z or @latest, and "dev" with the VCS revision (and +dirty) for a local go build.
 func buildVersion(info *debug.BuildInfo, ok bool) string {
+	if releaseVersion != "" {
+		return releaseVersion
+	}
 	if !ok {
 		return "dev"
 	}

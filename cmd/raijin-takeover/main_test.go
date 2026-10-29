@@ -540,3 +540,12 @@ func TestUnreadableScopeIsStructured(t *testing.T) {
 		t.Errorf("exit %d, output %s", code, out.String())
 	}
 }
+
+func TestReleaseVersionWinsOverBuildInfo(t *testing.T) {
+	old := releaseVersion
+	defer func() { releaseVersion = old }()
+	releaseVersion = "v9.9.9"
+	if got := buildVersion(&debug.BuildInfo{Main: debug.Module{Version: "v0.1.3"}}, true); got != "v9.9.9" {
+		t.Errorf("buildVersion = %q, want v9.9.9", got)
+	}
+}
