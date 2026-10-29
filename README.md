@@ -1,5 +1,11 @@
 # ⚡ Raijin Takeover
 
+[![CI](https://github.com/protonnegativo/raijin-takeover/actions/workflows/ci.yml/badge.svg)](https://github.com/protonnegativo/raijin-takeover/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/protonnegativo/raijin-takeover)](https://github.com/protonnegativo/raijin-takeover/releases/latest)
+[![License: MIT](https://img.shields.io/github/license/protonnegativo/raijin-takeover)](LICENSE)
+[![Go Reference](https://pkg.go.dev/badge/github.com/protonnegativo/raijin-takeover.svg)](https://pkg.go.dev/github.com/protonnegativo/raijin-takeover)
+[![Go Report Card](https://goreportcard.com/badge/github.com/protonnegativo/raijin-takeover)](https://goreportcard.com/report/github.com/protonnegativo/raijin-takeover)
+
 **dnsx plus a provider fingerprint table for AI agents: every name with its DNS answer, dangling CNAMEs ranked first with the provider and the claim hint.**
 
 `raijin-takeover` is a tool of **Raijin**, an arsenal of offensive security tools built for AI agents. It resolves every name with [dnsx](https://github.com/projectdiscovery/dnsx), matches each CNAME chain against a native table of takeover-prone providers (after the public [can-i-take-over-xyz](https://github.com/EdOverflow/can-i-take-over-xyz) list: GitHub Pages, S3, Heroku, Azure, Fastly, Shopify, Netlify, Zendesk and more, 72 services in all), and returns the **Raijin Schema**: one compact JSON where a CNAME that ends in NXDOMAIN on a claimable provider is a high finding with the way to claim it, a CNAME into a provider recognised by its "unclaimed" page is a medium finding with the text to look for, and every other name is still listed, in groups of names that share an answer.
