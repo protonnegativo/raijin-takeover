@@ -245,8 +245,9 @@ func run(args []string, stdout, stderr io.Writer) int {
 			if len(res.Next) > 0 {
 				res.Summary = "the scope names no single host to scan"
 				res.Target = *scopeFile
+				res.Errors = append(res.Errors, schema.Error{Kind: "no_targets", Hint: "the scope has only wildcards, which name no host: pass -d <name> or -l <names.txt>, or enumerate them first (see next)"})
 				write(stdout, &res, *format, *pretty)
-				return 1
+				return 2
 			}
 			fmt.Fprintln(stderr, "raijin-takeover: no names in scope")
 			return 1

@@ -128,6 +128,27 @@ func TestUsageErrorsExitOne(t *testing.T) {
 	}
 }
 
+func TestWildcardOnlyScopeIsNoTargetsExitTwo(t *testing.T) {
+	var out, errb bytes.Buffer
+	code := run([]string{"--scope", scopeFile(t)}, &out, &errb)
+	if code != 2 || !strings.HasPrefix(out.String(), `{"schema_version":1,`) {
+		t.Fatalf("exit %d, output %s", code, out.String())
+	}
+	var o output
+	if err := json.Unmarshal(out.Bytes(), &o); err != nil || len(o.Errors) != 1 || o.Errors[0].Kind != "no_targets" || o.Errors[0].Hint == "" {
+		t.Errorf("want one no_targets error: %v %s", err, out.String())
+	}
+}
+
+func TestUsageErrorsPrintNoJSON(t *testing.T) {
+	for _, args := range [][]string{{"--nope"}, {"--input", "x.jsonl"}, {"--scope", scopeFile(t), "-d", "www.example.org"}} {
+		var out, errb bytes.Buffer
+		if code := run(args, &out, &errb); code != 1 || out.Len() != 0 {
+			t.Errorf("%v: exit %d, stdout %q", args, code, out.String())
+		}
+	}
+}
+
 func TestMissingEngineExitsTwoAndListsEveryName(t *testing.T) {
 	var out, errb bytes.Buffer
 	code := run([]string{"--scope", scopeFile(t), "-d", "a.example.com", "-d", "b.example.com", "--dnsx", "/nonexistent/dnsx", "--raw", filepath.Join(t.TempDir(), "raw.jsonl")}, &out, &errb)

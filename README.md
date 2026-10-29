@@ -188,7 +188,7 @@ What the reducer does:
 - **Errors** say what to try next. If dnsx is missing, every name is still listed as `UNCHECKED`, with the hint in `errors`, and the exit code is 2.
 - **`schema_version`** is the first field of every result (1 today), the version of the result format.
 - **An invalid scope** is reported before anything runs: `errors` holds one `kind: "scope"` entry per bad line (`line 2: port in rule 'example.com:443'; ...`), so the agent can fix the whole file at once, and nothing is resolved.
-- **Exit codes:** 0 ok; 1 wrong usage (bad flag, missing argument or input); 2 a structured error with the JSON on stdout (invalid scope, dnsx missing), told apart by `errors[].kind`.
+- **Exit codes:** 0 ok; 1 wrong usage (bad flag, missing argument or input); 2 a structured error with the JSON on stdout (invalid scope, `no_targets` when the scope has only wildcards, dnsx missing), told apart by `errors[].kind`. Exit 1 never prints JSON.
 
 **No `-cname` for dnsx, on purpose.** dnsx writes the CNAME chain from the A and AAAA answers already. With `-cname` it also sends a CNAME query, which a resolver answers NOERROR even when the chain ends at a name that does not exist, and dnsx v1.2.1 then reports NOERROR instead of the A query's NXDOMAIN: the one status that makes a CNAME dangling is lost. The benchmark lab shows it (`legacy.acme.example` is `NXDOMAIN` with `-a`, `NOERROR` with `-a -cname`). A CNAME into a claimable provider with no address and NOERROR is still a `no-address` finding, so input collected with `-cname` does not hide those names.
 
