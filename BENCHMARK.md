@@ -25,11 +25,11 @@ Reproduce from the saved output: `bench/run.sh`. Re-resolve and refresh the fixt
 
 | Output | Bytes | Tokens | vs. dnsx JSON |
 |---|---:|---:|---:|
-| dnsx `-json -omit-raw` | 244,772 | 86,665 | 1× |
+| dnsx `-json -omit-raw` | 244,798 | 86,665 | 1× |
 | dnsx text (records) | 3,552 | 1,640 | 53× |
 | dnsx text (records + status) | 19,260 | 7,043 | 12× |
-| **raijin-takeover JSON (default)** | 14,466 | **4,973** | **17×** |
-| raijin-takeover `--pretty` | 20,297 | 6,353 | 14× |
+| **raijin-takeover JSON (default)** | 14,516 | **4,996** | **17×** |
+| raijin-takeover `--pretty` | 20,351 | 6,379 | 14× |
 | raijin-takeover `--format table` | 1,251 | 454 | 191× |
 
 ## Scenario 2: providers (gitlab.com names)
@@ -41,8 +41,8 @@ Reproduce from the saved output: `bench/run.sh`. Re-resolve and refresh the fixt
 | dnsx `-json -omit-raw` | 568,776 | 193,586 | 1× |
 | dnsx text (records) | 23,343 | 10,415 | 19× |
 | dnsx text (records + status) | 64,148 | 23,297 | 8.3× |
-| **raijin-takeover JSON (default)** | 46,635 | **16,220** | **12×** |
-| raijin-takeover `--pretty` | 61,978 | 20,082 | 9.6× |
+| **raijin-takeover JSON (default)** | 46,685 | **16,243** | **12×** |
+| raijin-takeover `--pretty` | 62,032 | 20,108 | 9.6× |
 | raijin-takeover `--format table` | 5,211 | 2,425 | 80× |
 
 ## Scenario 3: dangling (synthetic lab zone)
@@ -60,8 +60,8 @@ The 4 names on the same providers whose page had no fingerprint, and the Azure n
 | dnsx `-json -omit-raw` | 67,268 | 27,163 | 1× |
 | dnsx text (records) | 20,912 | 8,565 | 3.2× |
 | dnsx text (records + status) | 29,101 | 10,998 | 2.5× |
-| **raijin-takeover JSON (default)** | 11,838 | **3,357** | **8.1×** |
-| raijin-takeover `--pretty` | 17,134 | 4,772 | 5.7× |
+| **raijin-takeover JSON (default)** | 11,888 | **3,380** | **8.0×** |
+| raijin-takeover `--pretty` | 17,188 | 4,798 | 5.7× |
 | raijin-takeover `--format table` | 4,099 | 1,172 | 23× |
 
 The raijin-takeover output holds more than the dnsx rows: the 10 HTTP checks, the provider of every CNAME and a claim hint per finding. In every scenario its JSON includes about 20 tokens for `target`, the paths of the replayed files. A live run writes the names there and adds about 19 tokens for `raw`.
@@ -88,8 +88,8 @@ What the JSON leaves out stays in `raw`, which raijin-takeover saves to disk: TT
 
 - **Against dnsx's JSON**, the structured output an agent would parse, raijin-takeover uses **8× to 17× fewer tokens** for the same names and records. Most of the JSON is dnsx repeating its resolvers, TTL, timestamp and the zone's SOA record on every line.
 - **Against dnsx's text output**, raijin-takeover is not always smaller:
-  - records only: **3.0× larger** on the noisy run (1,640 → 4,973) and **1.6× larger** on the providers run (10,415 → 16,220); **2.6× smaller** on the dangling run (8,565 → 3,357). The text has one line per record and nothing for names that do not resolve: on the public runs it leaves out 498 and 700 names that raijin-takeover lists, and it cannot show a dangling CNAME at all, since it has no status.
-  - records plus the status run: **1.4× smaller** on the noisy run (7,043 → 4,973) and on the providers run (23,297 → 16,220), **3.3× smaller** on the dangling run (10,998 → 3,357).
+  - records only: **3.0× larger** on the noisy run (1,640 → 4,996) and **1.6× larger** on the providers run (10,415 → 16,243); **2.5× smaller** on the dangling run (8,565 → 3,380). The text has one line per record and nothing for names that do not resolve: on the public runs it leaves out 498 and 700 names that raijin-takeover lists, and it cannot show a dangling CNAME at all, since it has no status.
+  - records plus the status run: **1.4× smaller** on the noisy run (7,043 → 4,996) and on the providers run (23,297 → 16,243), **3.3× smaller** on the dangling run (10,998 → 3,380).
 
   When most names are different and do not resolve, the cost is the names themselves, and raijin-takeover lists every one. It writes each IP once per group instead of once per name and record type, which is where the dangling run saves the most. In exchange the agent gets the status of every name, the provider of every CNAME, whether names there can be claimed, the claim hint, the fingerprint to look for, and the candidates ranked first.
 - **The output stays bounded.** On a run too big for `--max-bytes`, raijin-takeover cuts the least important data first: names that do not resolve, then other group names, then groups, then extra names of low-ranked findings, then low-ranked findings. Every cut is counted in `omitted`, and `next` points to the raw file. dnsx's output has no upper bound.
