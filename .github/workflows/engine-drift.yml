@@ -86,7 +86,7 @@ jobs:
             echo "bench run exited $status" >> "$RUNNER_TEMP/verify.txt"
             exit 1
           fi
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: bench-live
